@@ -140,7 +140,7 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-soft flex">
+    <div className="min-h-screen bg-page flex">
       <Sidebar
         currentFilter={currentFilter}
         onFilterChange={setCurrentFilter}

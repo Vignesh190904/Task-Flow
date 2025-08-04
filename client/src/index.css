@@ -1,0 +1,304 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* TaskFlow - Modern Productivity Theme */
+@layer base {
+  :root {
+    /* Light Mode Colors */
+    --background: 240 10% 98%;
+    --background-subtle: 240 12% 96%;
+    --foreground: 224 20% 15%;
+    --card: 0 0% 100%;
+    --card-foreground: 224 20% 15%;
+    --card-hover: 240 15% 99%;
+    --primary: 256 90% 65%;
+    --primary-hover: 256 85% 70%;
+    --primary-foreground: 0 0% 100%;
+    --primary-soft: 256 60% 95%;
+    --secondary: 240 15% 96%;
+    --secondary-hover: 240 20% 94%;
+    --secondary-foreground: 224 25% 25%;
+    --muted: 240 12% 95%;
+    --muted-foreground: 224 15% 55%;
+    --accent: 280 85% 92%;
+    --accent-foreground: 280 70% 35%;
+    --success: 142 76% 45%;
+    --success-foreground: 0 0% 100%;
+    --success-soft: 142 45% 95%;
+    --warning: 38 90% 60%;
+    --warning-foreground: 0 0% 100%;
+    --warning-soft: 38 85% 95%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --destructive-soft: 0 75% 95%;
+    --priority-high: 0 84% 60%;
+    --priority-medium: 38 90% 60%;
+    --priority-low: 142 76% 45%;
+    --border: 240 15% 88%;
+    --border-soft: 240 12% 92%;
+    --input: 240 12% 96%;
+    --ring: 256 90% 65%;
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(256 90% 65%), hsl(280 85% 70%));
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(240 15% 99%));
+    --gradient-soft: linear-gradient(180deg, hsl(240 12% 98%), hsl(240 10% 96%));
+
+    /* Shadows */
+    --shadow-soft: 0 2px 8px -2px hsl(240 25% 25% / 0.08);
+    --shadow-medium: 0 8px 25px -5px hsl(240 25% 25% / 0.12);
+    --shadow-strong: 0 20px 40px -12px hsl(240 25% 25% / 0.18);
+
+    /* Border radius */
+    --radius: 0.5rem;
+
+    /* Legacy support for existing components */
+    --background-page: var(--background);
+    --background-surface: var(--card);
+    --background-muted-surface: var(--muted);
+    --background-overlay-completed: var(--success-soft);
+    --text-primary: var(--foreground);
+    --text-secondary: var(--muted-foreground);
+    --text-placeholder: var(--muted-foreground);
+    --text-disabled: var(--muted-foreground);
+    --text-strike-through: var(--muted-foreground);
+    --status-high: var(--priority-high);
+    --status-medium: var(--priority-medium);
+    --status-completed: var(--success);
+    --status-pending: var(--muted-foreground);
+    --icon-default: var(--muted-foreground);
+    --icon-interactive: var(--primary);
+    --border-default: var(--border);
+    --border-focus: var(--ring);
+    --primary-purple: var(--primary);
+    --primary-purple-hover: var(--primary-hover);
+    --shadow-level1: var(--shadow-soft);
+    --shadow-level2: var(--shadow-medium);
+    --shadow-focus: 0 0 0 3px hsl(var(--ring) / 0.3);
+    --radius-small: calc(var(--radius) - 2px);
+    --radius-default: var(--radius);
+    --radius-large: calc(var(--radius) + 4px);
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 16px;
+    --spacing-lg: 24px;
+    --spacing-xl: 32px;
+    --spacing-xxl: 48px;
+    --transition-fast: 150ms ease-in-out;
+    --transition-normal: 250ms ease;
+    --transition-hover: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .dark {
+    /* Dark Mode Colors */
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --card-hover: 217.2 32.6% 17.5%;
+    --primary: 210 40% 98%;
+    --primary-hover: 210 40% 95%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary-soft: 210 40% 15%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-hover: 217.2 32.6% 20%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --success: 142 76% 45%;
+    --success-foreground: 0 0% 100%;
+    --success-soft: 142 45% 15%;
+    --warning: 38 90% 60%;
+    --warning-foreground: 0 0% 100%;
+    --warning-soft: 38 85% 15%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --destructive-soft: 0 75% 15%;
+    --priority-high: 0 84% 60%;
+    --priority-medium: 38 90% 60%;
+    --priority-low: 142 76% 45%;
+    --border: 217.2 32.6% 17.5%;
+    --border-soft: 217.2 32.6% 20%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+
+    /* Dark mode gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(210 40% 98%), hsl(210 40% 95%));
+    --gradient-card: linear-gradient(145deg, hsl(222.2 84% 4.9%), hsl(217.2 32.6% 17.5%));
+    --gradient-soft: linear-gradient(180deg, hsl(222.2 84% 4.9%), hsl(217.2 32.6% 17.5%));
+
+    /* Dark mode shadows */
+    --shadow-soft: 0 2px 8px -2px hsl(0 0% 0% / 0.3);
+    --shadow-medium: 0 8px 25px -5px hsl(0 0% 0% / 0.4);
+    --shadow-strong: 0 20px 40px -12px hsl(0 0% 0% / 0.5);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-background text-foreground font-regular;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    font-weight: 400;
+  }
+
+  /* Typography scale */
+  .text-xs { font-size: 0.75rem; line-height: 1.5; }
+  .text-sm { font-size: 0.875rem; line-height: 1.5; }
+  .text-base { font-size: 1rem; line-height: 1.5; }
+  .text-lg { font-size: 1.125rem; line-height: 1.2; }
+  .text-xl { font-size: 1.5rem; line-height: 1.2; }
+  .text-2xl { font-size: 2rem; line-height: 1.2; }
+  .text-3xl { font-size: 2.25rem; line-height: 1.2; }
+  .text-4xl { font-size: 3rem; line-height: 1.2; }
+
+  /* Font weights */
+  .font-regular { font-weight: 400; }
+  .font-medium { font-weight: 500; }
+  .font-semibold { font-weight: 600; }
+  .font-bold { font-weight: 700; }
+}
+
+@layer utilities {
+  /* Background utilities */
+  .bg-page { background-color: hsl(var(--background)); }
+  .bg-surface { background-color: hsl(var(--card)); }
+  .bg-muted-surface { background-color: hsl(var(--muted)); }
+  .bg-overlay-completed { background-color: hsl(var(--success-soft)); }
+  .bg-primary-purple { background-color: hsl(var(--primary)); }
+  .bg-primary-purple-hover { background-color: hsl(var(--primary-hover)); }
+
+  /* Text utilities */
+  .text-primary { color: hsl(var(--foreground)); }
+  .text-secondary { color: hsl(var(--muted-foreground)); }
+  .text-placeholder { color: hsl(var(--muted-foreground)); }
+  .text-disabled { color: hsl(var(--muted-foreground)); }
+  .text-strike-through { color: hsl(var(--muted-foreground)); }
+
+  /* Border utilities */
+  .border-default { border-color: hsl(var(--border)); }
+  .border-focus { border-color: hsl(var(--ring)); }
+  .border-primary-purple { border-color: hsl(var(--primary)); }
+
+  /* Shadow utilities */
+  .shadow-level1 { box-shadow: var(--shadow-soft); }
+  .shadow-level2 { box-shadow: var(--shadow-medium); }
+  .shadow-focus { box-shadow: var(--shadow-focus); }
+
+  /* Border radius utilities */
+  .rounded-small { border-radius: calc(var(--radius) - 2px); }
+  .rounded-default { border-radius: var(--radius); }
+  .rounded-large { border-radius: calc(var(--radius) + 4px); }
+
+  /* Transition utilities */
+  .transition-fast { transition: var(--transition-fast); }
+  .transition-normal { transition: var(--transition-normal); }
+  .transition-hover { transition: var(--transition-hover); }
+
+  /* Gradient utilities */
+  .gradient-primary { background: var(--gradient-primary); }
+  .text-gradient-primary { 
+    background: var(--gradient-primary); 
+    -webkit-background-clip: text; 
+    -webkit-text-fill-color: transparent; 
+    background-clip: text; 
+  }
+
+  /* Status color utilities */
+  .text-status-high { color: hsl(var(--priority-high)); }
+  .text-status-medium { color: hsl(var(--priority-medium)); }
+  .text-status-completed { color: hsl(var(--success)); }
+  .border-status-high { border-color: hsl(var(--priority-high)); }
+  .border-status-medium { border-color: hsl(var(--priority-medium)); }
+  .border-status-completed { border-color: hsl(var(--success)); }
+  .bg-status-high { background-color: hsl(var(--priority-high)); }
+  .bg-status-medium { background-color: hsl(var(--priority-medium)); }
+  .bg-status-completed { background-color: hsl(var(--success)); }
+
+  /* Priority utilities */
+  .bg-priority-high { background-color: hsl(var(--priority-high)); }
+  .bg-priority-medium { background-color: hsl(var(--priority-medium)); }
+  .bg-priority-low { background-color: hsl(var(--priority-low)); }
+  .text-priority-high { color: hsl(var(--priority-high)); }
+  .text-priority-medium { color: hsl(var(--priority-medium)); }
+  .text-priority-low { color: hsl(var(--priority-low)); }
+  .border-priority-high { border-color: hsl(var(--priority-high)); }
+  .border-priority-medium { border-color: hsl(var(--priority-medium)); }
+  .border-priority-low { border-color: hsl(var(--priority-low)); }
+
+  /* Soft background utilities */
+  .bg-primary-soft { background-color: hsl(var(--primary-soft)); }
+  .bg-success-soft { background-color: hsl(var(--success-soft)); }
+  .bg-warning-soft { background-color: hsl(var(--warning-soft)); }
+  .bg-destructive-soft { background-color: hsl(var(--destructive-soft)); }
+}
+
+/* Animations */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes task-complete {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+.animate-scale-in {
+  animation: scale-in 0.2s ease-out;
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.3s ease-out;
+}
+
+.animate-task-complete {
+  animation: task-complete 0.6s ease-in-out;
+}

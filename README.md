@@ -1,73 +1,247 @@
-# Welcome to your Lovable project
+# TaskFlow - Modern Task Management Application
 
-## Project info
+A beautiful, feature-rich task management application built with React, TypeScript, and Supabase. TaskFlow helps you organize, prioritize, and complete your tasks with an elegant purple-blue gradient theme.
 
-**URL**: https://lovable.dev/projects/66f236a9-b9f4-49c9-89c7-c1475da9d3ed
+## ✨ Features
 
-## How can I edit this code?
+- **Modern UI/UX**: Elegant purple-blue gradient theme with professional aesthetics
+- **Task Management**: Create, edit, complete, and delete tasks
+- **Priority System**: High, medium, and low priority levels with color coding
+- **Status Tracking**: Pending, completed, and deleted task states
+- **Search & Filter**: Find tasks quickly with search and filter functionality
+- **Responsive Design**: Works perfectly on desktop, tablet, and mobile
+- **Real-time Updates**: Instant synchronization with Supabase
+- **User Authentication**: Secure login and registration with email verification
+- **Profile Management**: Custom avatars and user profiles
 
-There are several ways of editing your application.
+## 🚀 Quick Start
 
-**Use Lovable**
+### Prerequisites
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/66f236a9-b9f4-49c9-89c7-c1475da9d3ed) and start prompting.
+- Node.js 18+ 
+- npm or yarn
+- Supabase account (free tier works great!)
 
-Changes made via Lovable will be committed automatically to this repo.
+### 1. Clone the Repository
 
-**Use your preferred IDE**
+```bash
+git clone <your-repo-url>
+cd taskflow
+```
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### 2. Install Dependencies
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+```bash
+npm run install:all
+```
 
-Follow these steps:
+Or run the setup script:
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+```bash
+node setup.js
+```
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+### 3. Supabase Setup
 
-# Step 3: Install the necessary dependencies.
-npm i
+1. **Create a Supabase Project**:
+   - Go to [supabase.com](https://supabase.com)
+   - Create a new project
+   - Note your project URL and anon key
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+2. **Update Supabase Configuration**:
+   - Open `client/src/lib/supabase.ts`
+   - Replace the URL and anon key with your project credentials
+
+3. **Run Database Setup**:
+   - Go to your Supabase project dashboard
+   - Open the SQL Editor
+   - Copy and paste the contents of `supabase-setup.sql`
+   - Run the SQL to create the necessary tables and policies
+
+### 4. Start the Application
+
+```bash
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+This will start both the frontend (port 5173) and backend (port 5000).
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### 5. Access the Application
 
-**Use GitHub Codespaces**
+- **Frontend**: http://localhost:5173
+- **Backend API**: http://localhost:5000
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## 📁 Project Structure
 
-## What technologies are used for this project?
+```
+taskflow/
+├── client/                 # React frontend
+│   ├── src/
+│   │   ├── components/    # UI components
+│   │   ├── contexts/      # React contexts
+│   │   ├── hooks/         # Custom hooks
+│   │   ├── lib/           # Utilities and services
+│   │   ├── pages/         # Page components
+│   │   └── styles/        # CSS and styling
+│   └── public/            # Static assets
+├── server/                # Express backend (backup)
+├── models/                # Database models
+├── supabase-setup.sql     # Database schema
+└── setup.js              # Setup script
+```
 
-This project is built with:
+## 🎨 Theme System
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+TaskFlow uses a custom design system with:
 
-## How can I deploy this project?
+- **Primary Colors**: Purple-blue gradient (256 90% 65% → 280 85% 70%)
+- **Background**: Soft white (240 10% 98%)
+- **Shadows**: Soft, medium, and strong shadow variants
+- **Transitions**: Smooth 200ms animations
+- **Border Radius**: 0.5rem (8px) for consistency
 
-Simply open [Lovable](https://lovable.dev/projects/66f236a9-b9f4-49c9-89c7-c1475da9d3ed) and click on Share -> Publish.
+## 🔧 Configuration
 
-## Can I connect a custom domain to my Lovable project?
+### Environment Variables
 
-Yes, you can!
+Create a `.env` file in the server directory:
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+```env
+PORT=5000
+MONGODB_URI=your_mongodb_connection_string
+JWT_SECRET=your_jwt_secret
+NODE_ENV=development
+```
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+### Supabase Configuration
+
+Update `client/src/lib/supabase.ts`:
+
+```typescript
+const supabaseUrl = 'your-project-url'
+const supabaseAnonKey = 'your-anon-key'
+```
+
+## 🛠️ Development
+
+### Available Scripts
+
+```bash
+# Install all dependencies
+npm run install:all
+
+# Start development servers
+npm run dev
+
+# Start only frontend
+npm run dev:client
+
+# Start only backend
+npm run dev:server
+
+# Build for production
+npm run build
+
+# Run setup script
+node setup.js
+```
+
+### Database Schema
+
+The application uses two main tables:
+
+**profiles**:
+- `id` (UUID, primary key)
+- `full_name` (TEXT)
+- `email` (TEXT)
+- `avatar_url` (TEXT)
+- `created_at` (TIMESTAMP)
+
+**tasks**:
+- `id` (UUID, primary key)
+- `user_id` (UUID, foreign key)
+- `title` (TEXT)
+- `description` (TEXT, optional)
+- `priority` (TEXT: 'low', 'medium', 'high')
+- `status` (TEXT: 'pending', 'completed', 'deleted')
+- `created_at` (TIMESTAMP)
+
+## 🔐 Authentication
+
+TaskFlow uses Supabase Auth with:
+
+- Email/password authentication
+- Email verification
+- JWT tokens
+- Row Level Security (RLS)
+- Automatic profile creation
+
+## 🎯 Key Features
+
+### Task Management
+- Create tasks with title, description, and priority
+- Mark tasks as complete/incomplete
+- Soft delete (move to deleted section)
+- Restore deleted tasks
+- Search and filter functionality
+
+### User Experience
+- Responsive design for all devices
+- Smooth animations and transitions
+- Real-time updates
+- Offline support with localStorage
+- Toast notifications
+
+### Security
+- Row Level Security in Supabase
+- JWT token authentication
+- Input validation
+- XSS protection
+- CORS configuration
+
+## 🐛 Troubleshooting
+
+### Common Issues
+
+1. **Login Not Working**:
+   - Check Supabase configuration in `client/src/lib/supabase.ts`
+   - Verify email verification is complete
+   - Check browser console for errors
+
+2. **Database Errors**:
+   - Ensure Supabase SQL setup is complete
+   - Check RLS policies are enabled
+   - Verify table structure matches schema
+
+3. **Build Errors**:
+   - Clear node_modules and reinstall
+   - Check TypeScript configuration
+   - Verify all dependencies are installed
+
+### Debug Mode
+
+Enable debug logging by setting `NODE_ENV=development` in your environment variables.
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
+
+## 📄 License
+
+This project is licensed under the MIT License.
+
+## 🙏 Acknowledgments
+
+- [Supabase](https://supabase.com) for backend services
+- [React](https://reactjs.org) for the frontend framework
+- [TypeScript](https://typescriptlang.org) for type safety
+- [Tailwind CSS](https://tailwindcss.com) for styling
+- [Lucide React](https://lucide.dev) for icons
+
+---
+
+**TaskFlow** - Plan. Prioritize. Progress. ✨

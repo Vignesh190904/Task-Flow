@@ -25,11 +25,6 @@ export function TaskList({
   const filteredTasks = useMemo(() => {
     let filtered = tasks;
 
-    // Filter by status
-    if (filter !== 'all') {
-      filtered = filtered.filter(task => task.status === filter);
-    }
-
     // Filter by search query
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
@@ -42,7 +37,7 @@ export function TaskList({
     // Sort tasks
     return filtered.sort((a, b) => {
       // Priority sort for pending tasks
-      if (a.status === 'pending' && b.status === 'pending') {
+      if (!a.is_completed && !b.is_completed && !a.is_deleted && !b.is_deleted) {
         const priorityOrder = { high: 3, medium: 2, low: 1 };
         if (priorityOrder[a.priority] !== priorityOrder[b.priority]) {
           return priorityOrder[b.priority] - priorityOrder[a.priority];
@@ -50,7 +45,7 @@ export function TaskList({
       }
       
       // Then by creation date (newest first)
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
     });
   }, [tasks, filter, searchQuery]);
 
@@ -90,10 +85,10 @@ export function TaskList({
     return (
       <div className="flex-1 flex items-center justify-center p-8">
         <div className="text-center max-w-md space-y-4 animate-fade-in">
-          <div className="w-16 h-16 mx-auto bg-gradient-primary rounded-2xl flex items-center justify-center">
+          <div className="w-16 h-16 mx-auto bg-gradient-primary rounded-lg flex items-center justify-center shadow-medium">
             <span className="text-2xl">✨</span>
           </div>
-          <h3 className="text-xl font-semibold">{emptyState.title}</h3>
+          <h3 className="text-xl font-semibold text-foreground">{emptyState.title}</h3>
           <p className="text-muted-foreground">{emptyState.description}</p>
         </div>
       </div>
@@ -101,11 +96,11 @@ export function TaskList({
   }
 
   return (
-    <div className="flex-1 p-6 overflow-y-auto">
+    <div className="flex-1 p-6 overflow-y-auto bg-background">
       <div className="max-w-4xl mx-auto space-y-4">
         {/* Results header */}
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold capitalize">
+          <h2 className="text-lg font-semibold text-foreground capitalize">
             {filter === 'all' ? 'All Tasks' : `${filter} Tasks`}
             {searchQuery && (
               <span className="text-muted-foreground font-normal">
