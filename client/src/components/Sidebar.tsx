@@ -176,8 +176,8 @@ export function Sidebar({
         </div>
         
         <div className="text-xs text-muted-foreground text-center mt-3">
-          <p>TaskFlow v1.0</p>
-          <p className="mt-1">Plan. Prioritize. Progress.</p>
+          <p>Task-Flow v2.2</p>
+          <p className="mt-1">Project By Vignesh</p>
         </div>
       </div>
     </div>

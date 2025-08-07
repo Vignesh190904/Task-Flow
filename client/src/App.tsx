@@ -61,60 +61,58 @@ const PublicRoute = ({ children }: { children: React.ReactNode }) => {
 
 const AppRoutes = () => {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Landing />} />
-        <Route 
-          path="/login" 
-          element={
-            <PublicRoute>
-              <Login />
-            </PublicRoute>
-          } 
-        />
-        <Route 
-          path="/register" 
-          element={
-            <PublicRoute>
-              <Register />
-            </PublicRoute>
-          } 
-        />
-        <Route 
-          path="/home" 
-          element={
-            <ProtectedRoute>
-              <Home />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/dashboard" 
-          element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/profile" 
-          element={
-            <ProtectedRoute>
-              <ProfileSettings />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/deleted" 
-          element={
-            <ProtectedRoute>
-              <DeletedTasks />
-            </ProtectedRoute>
-          } 
-        />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </BrowserRouter>
+    <Routes>
+      <Route path="/" element={<Landing />} />
+      <Route 
+        path="/login" 
+        element={
+          <PublicRoute>
+            <Login />
+          </PublicRoute>
+        } 
+      />
+      <Route 
+        path="/register" 
+        element={
+          <PublicRoute>
+            <Register />
+          </PublicRoute>
+        } 
+      />
+      <Route 
+        path="/home" 
+        element={
+          <ProtectedRoute>
+            <Home />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/dashboard" 
+        element={
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/profile" 
+        element={
+          <ProtectedRoute>
+            <ProfileSettings />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/deleted" 
+        element={
+          <ProtectedRoute>
+            <DeletedTasks />
+          </ProtectedRoute>
+        } 
+      />
+      <Route path="*" element={<NotFound />} />
+    </Routes>
   );
 };
 

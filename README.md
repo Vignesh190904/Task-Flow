@@ -18,7 +18,7 @@ A beautiful, feature-rich task management application built with React, TypeScri
 
 ### Prerequisites
 
-- Node.js 18+ 
+- Node.js 18+
 - npm or yarn
 - Supabase account (free tier works great!)
 
@@ -32,13 +32,8 @@ cd taskflow
 ### 2. Install Dependencies
 
 ```bash
-npm run install:all
-```
-
-Or run the setup script:
-
-```bash
-node setup.js
+cd client
+npm install
 ```
 
 ### 3. Supabase Setup
@@ -64,12 +59,11 @@ node setup.js
 npm run dev
 ```
 
-This will start both the frontend (port 5173) and backend (port 5000).
+This will start the frontend (port 5173).
 
 ### 5. Access the Application
 
 - **Frontend**: http://localhost:5173
-- **Backend API**: http://localhost:5000
 
 ## 📁 Project Structure
 
@@ -84,42 +78,8 @@ taskflow/
 │   │   ├── pages/         # Page components
 │   │   └── styles/        # CSS and styling
 │   └── public/            # Static assets
-├── server/                # Express backend (backup)
-├── models/                # Database models
 ├── supabase-setup.sql     # Database schema
-└── setup.js              # Setup script
-```
-
-## 🎨 Theme System
-
-TaskFlow uses a custom design system with:
-
-- **Primary Colors**: Purple-blue gradient (256 90% 65% → 280 85% 70%)
-- **Background**: Soft white (240 10% 98%)
-- **Shadows**: Soft, medium, and strong shadow variants
-- **Transitions**: Smooth 200ms animations
-- **Border Radius**: 0.5rem (8px) for consistency
-
-## 🔧 Configuration
-
-### Environment Variables
-
-Create a `.env` file in the server directory:
-
-```env
-PORT=5000
-MONGODB_URI=your_mongodb_connection_string
-JWT_SECRET=your_jwt_secret
-NODE_ENV=development
-```
-
-### Supabase Configuration
-
-Update `client/src/lib/supabase.ts`:
-
-```typescript
-const supabaseUrl = 'your-project-url'
-const supabaseAnonKey = 'your-anon-key'
+└── setup.js               # Setup script
 ```
 
 ## 🛠️ Development
@@ -127,20 +87,14 @@ const supabaseAnonKey = 'your-anon-key'
 ### Available Scripts
 
 ```bash
-# Install all dependencies
-npm run install:all
+# Install frontend dependencies
+cd client && npm install
 
-# Start development servers
-npm run dev
-
-# Start only frontend
-npm run dev:client
-
-# Start only backend
-npm run dev:server
+# Start frontend
+cd client && npm run dev
 
 # Build for production
-npm run build
+cd client && npm run build
 
 # Run setup script
 node setup.js
@@ -166,7 +120,7 @@ The application uses two main tables:
 - `status` (TEXT: 'pending', 'completed', 'deleted')
 - `created_at` (TIMESTAMP)
 
-## 🔐 Authentication
+## 🔑 Authentication
 
 TaskFlow uses Supabase Auth with:
 
@@ -176,84 +130,7 @@ TaskFlow uses Supabase Auth with:
 - Row Level Security (RLS)
 - Automatic profile creation
 
-## 🎯 Key Features
-
-### Task Management
-- Create tasks with title, description, and priority
-- Mark tasks as complete/incomplete
-- Soft delete (move to deleted section)
-- Restore deleted tasks
-- Search and filter functionality
-
-### User Experience
-- Responsive design for all devices
-- Smooth animations and transitions
-- Real-time updates
-- Offline support with localStorage
-- Toast notifications
-
-### Security
-- Row Level Security in Supabase
-- JWT token authentication
-- Input validation
-- XSS protection
-- CORS configuration
-
-## 🐛 Troubleshooting
-
-### Common Issues
-
-1. **Login Not Working**:
-   - Check Supabase configuration in `client/src/lib/supabase.ts`
-   - Verify email verification is complete
-   - Check browser console for errors
-
-2. **Database Errors**:
-   - Ensure Supabase SQL setup is complete
-   - Check RLS policies are enabled
-   - Verify table structure matches schema
-
-3. **Build Errors**:
-   - Clear node_modules and reinstall
-   - Check TypeScript configuration
-   - Verify all dependencies are installed
-
-### Debug Mode
-
-Enable debug logging by setting `NODE_ENV=development` in your environment variables.
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
-
-## 📄 License
-
-This project is licensed under the MIT License.
-
-## 🙏 Acknowledgments
-
-- [Supabase](https://supabase.com) for backend services
-- [React](https://reactjs.org) for the frontend framework
-- [TypeScript](https://typescriptlang.org) for type safety
-- [Tailwind CSS](https://tailwindcss.com) for styling
-- [Lucide React](https://lucide.dev) for icons
-
----
-
-**TaskFlow** - Plan. Prioritize. Progress. ✨
-
 ## Deployment Instructions
-
-### Backend (Render)
-- **Root Directory:** `server/`
-- **Build Command:** (leave blank or use `npm install`)
-- **Start Command:** `npm start`
-- **Environment Variables:** Set all required variables (e.g., `MONGODB_URI`, `NODE_ENV`, etc.) in the Render dashboard.
-- **CORS:** Already configured for GitHub Pages domain.
 
 ### Frontend (GitHub Pages)
 - **Build Command:** `npm run build`
