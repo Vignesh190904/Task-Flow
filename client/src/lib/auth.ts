@@ -6,6 +6,8 @@ export interface AuthUser {
   email: string
   full_name: string
   avatar_url: string
+  custom_avatar_url?: string
+  is_verified?: boolean
 }
 
 export interface SignUpData {
@@ -64,6 +66,8 @@ export class AuthService {
         email: profile.email,
         full_name: profile.full_name,
         avatar_url: profile.avatar_url,
+        custom_avatar_url: profile.custom_avatar_url,
+        is_verified: profile.is_verified,
       }
     } catch (error) {
       console.error('Error creating profile for user:', error)
@@ -102,21 +106,16 @@ export class AuthService {
             avatar_url: data.avatar_url,
           })
 
-        if (profileError && profileError.code !== '23505') { // Ignore duplicate key errors
+        if (profileError) {
           console.error('Profile creation error:', profileError)
         }
-
-        toast({
-          title: "Account created successfully!",
-          description: "Please check your email to verify your account.",
-        })
 
         return { success: true }
       }
 
-      return { success: false, error: 'Failed to create account' }
+      return { success: false, error: 'Signup failed' }
     } catch (error) {
-      console.error('Sign up error:', error)
+      console.error('Signup error:', error)
       return { success: false, error: 'An unexpected error occurred' }
     }
   }
@@ -142,45 +141,144 @@ export class AuthService {
           .eq('id', authData.user.id)
           .single()
 
-        let userProfile: AuthUser | null = null
-
         if (profileError) {
           console.error('Profile fetch error:', profileError)
           
-          // If profile doesn't exist, try to create one
-          if (profileError.code === 'PGRST116') { // No rows returned
+          // If profile doesn't exist, create one
+          if (profileError.code === 'PGRST116') {
             console.log('Profile not found, creating one...')
-            userProfile = await this.createProfileForUser(authData.user.id, authData.user.email!)
-          } else {
-            return { success: false, error: 'Failed to load user profile' }
+            const createdProfile = await this.createProfileForUser(authData.user.id, authData.user.email!)
+            if (createdProfile) {
+              return { success: true, user: createdProfile }
+            }
           }
-        } else if (profile) {
-          userProfile = {
-            id: profile.id,
-            email: profile.email,
-            full_name: profile.full_name,
-            avatar_url: profile.avatar_url,
-          }
+          
+          return { success: false, error: 'Failed to load user profile' }
         }
 
-        if (!userProfile) {
-          return { success: false, error: 'Failed to create or load user profile' }
+        const user: AuthUser = {
+          id: profile.id,
+          email: profile.email,
+          full_name: profile.full_name,
+          avatar_url: profile.avatar_url,
+          custom_avatar_url: profile.custom_avatar_url,
+          is_verified: profile.is_verified,
         }
 
-        // Store user data in localStorage for persistence
-        localStorage.setItem('user', JSON.stringify(userProfile))
+        // Store user in localStorage for immediate UI response
+        localStorage.setItem('user', JSON.stringify(user))
 
-        toast({
-          title: "Welcome back!",
-          description: "You have been successfully logged in.",
-        })
-
-        return { success: true, user: userProfile }
+        return { success: true, user }
       }
 
-      return { success: false, error: 'Failed to sign in' }
+      return { success: false, error: 'Signin failed' }
     } catch (error) {
-      console.error('Sign in error:', error)
+      console.error('Signin error:', error)
+      return { success: false, error: 'An unexpected error occurred' }
+    }
+  }
+
+  // Sign in with Google OAuth
+  static async signInWithGoogle(): Promise<{ success: boolean; error?: string }> {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/dashboard`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
+        },
+      })
+
+      if (error) {
+        console.error('Google signin error:', error)
+        return { success: false, error: error.message }
+      }
+
+      return { success: true }
+    } catch (error) {
+      console.error('Google signin error:', error)
+      return { success: false, error: 'An unexpected error occurred' }
+    }
+  }
+
+  // Send OTP for Google users
+  static async sendOTP(email: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email: email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/dashboard`,
+        },
+      })
+
+      if (error) {
+        console.error('OTP send error:', error)
+        return { success: false, error: error.message }
+      }
+
+      return { success: true }
+    } catch (error) {
+      console.error('OTP send error:', error)
+      return { success: false, error: 'An unexpected error occurred' }
+    }
+  }
+
+  // Verify OTP
+  static async verifyOTP(email: string, token: string): Promise<{ success: boolean; user?: AuthUser; error?: string }> {
+    try {
+      const { data, error } = await supabase.auth.verifyOtp({
+        email: email,
+        token: token,
+        type: 'email',
+      })
+
+      if (error) {
+        console.error('OTP verification error:', error)
+        return { success: false, error: error.message }
+      }
+
+      if (data.user) {
+        // Update user verification status
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ is_verified: true })
+          .eq('id', data.user.id)
+
+        if (updateError) {
+          console.error('Profile update error:', updateError)
+        }
+
+        // Get user profile
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', data.user.id)
+          .single()
+
+        if (profileError) {
+          console.error('Profile fetch error:', profileError)
+          return { success: false, error: 'Failed to load user profile' }
+        }
+
+        const user: AuthUser = {
+          id: profile.id,
+          email: profile.email,
+          full_name: profile.full_name,
+          avatar_url: profile.avatar_url,
+          custom_avatar_url: profile.custom_avatar_url,
+          is_verified: profile.is_verified,
+        }
+
+        localStorage.setItem('user', JSON.stringify(user))
+        return { success: true, user }
+      }
+
+      return { success: false, error: 'OTP verification failed' }
+    } catch (error) {
+      console.error('OTP verification error:', error)
       return { success: false, error: 'An unexpected error occurred' }
     }
   }
@@ -189,22 +287,18 @@ export class AuthService {
   static async signOut(): Promise<{ success: boolean; error?: string }> {
     try {
       const { error } = await supabase.auth.signOut()
-
+      
       if (error) {
+        console.error('Signout error:', error)
         return { success: false, error: error.message }
       }
 
       // Clear localStorage
       localStorage.removeItem('user')
 
-      toast({
-        title: "Logged out",
-        description: "You have been successfully logged out.",
-      })
-
       return { success: true }
     } catch (error) {
-      console.error('Sign out error:', error)
+      console.error('Signout error:', error)
       return { success: false, error: 'An unexpected error occurred' }
     }
   }
@@ -212,24 +306,25 @@ export class AuthService {
   // Get current user
   static async getCurrentUser(): Promise<AuthUser | null> {
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-
-      if (!user) {
+      const { data: { user }, error } = await supabase.auth.getUser()
+      
+      if (error || !user) {
+        console.error('Get current user error:', error)
         return null
       }
 
       // Get user profile
-      const { data: profile, error } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', user.id)
         .single()
 
-      if (error) {
-        console.error('Profile fetch error:', error)
+      if (profileError) {
+        console.error('Profile fetch error:', profileError)
         
-        // If profile doesn't exist, try to create one
-        if (error.code === 'PGRST116') { // No rows returned
+        // If profile doesn't exist, create one
+        if (profileError.code === 'PGRST116') {
           console.log('Profile not found, creating one...')
           return await this.createProfileForUser(user.id, user.email!)
         }
@@ -237,16 +332,19 @@ export class AuthService {
         return null
       }
 
-      if (!profile) {
-        return null
-      }
-
-      return {
+      const authUser: AuthUser = {
         id: profile.id,
         email: profile.email,
         full_name: profile.full_name,
         avatar_url: profile.avatar_url,
+        custom_avatar_url: profile.custom_avatar_url,
+        is_verified: profile.is_verified,
       }
+
+      // Update localStorage
+      localStorage.setItem('user', JSON.stringify(authUser))
+
+      return authUser
     } catch (error) {
       console.error('Get current user error:', error)
       return null
@@ -259,11 +357,11 @@ export class AuthService {
     return user !== null
   }
 
-  // Get user from localStorage (for persistence)
+  // Get stored user from localStorage
   static getStoredUser(): AuthUser | null {
     try {
-      const userData = localStorage.getItem('user')
-      return userData ? JSON.parse(userData) : null
+      const userStr = localStorage.getItem('user')
+      return userStr ? JSON.parse(userStr) : null
     } catch (error) {
       console.error('Error parsing stored user:', error)
       return null
@@ -271,7 +369,7 @@ export class AuthService {
   }
 
   // Update user profile
-  static async updateProfile(userId: string, updates: Partial<{ full_name: string; avatar_url: string }>): Promise<{ success: boolean; error?: string }> {
+  static async updateProfile(userId: string, updates: Partial<{ full_name: string; avatar_url: string; custom_avatar_url: string }>): Promise<{ success: boolean; error?: string }> {
     try {
       const { error } = await supabase
         .from('profiles')
@@ -283,21 +381,9 @@ export class AuthService {
         return { success: false, error: error.message }
       }
 
-      // Update stored user data
-      const storedUser = this.getStoredUser()
-      if (storedUser && storedUser.id === userId) {
-        const updatedUser = { ...storedUser, ...updates }
-        localStorage.setItem('user', JSON.stringify(updatedUser))
-      }
-
-      toast({
-        title: "Profile updated!",
-        description: "Your profile has been successfully updated.",
-      })
-
       return { success: true }
     } catch (error) {
-      console.error('Update profile error:', error)
+      console.error('Profile update error:', error)
       return { success: false, error: 'An unexpected error occurred' }
     }
   }

@@ -11,6 +11,7 @@ export interface Profile {
   full_name: string
   email: string
   avatar_url: string
+  custom_avatar_url?: string
   created_at: string
 }
 
@@ -21,11 +22,17 @@ export interface Task {
   description?: string
   priority: 'low' | 'medium' | 'high'
   status: 'pending' | 'completed' | 'deleted'
+  due_date?: string
+  due_time?: string
   created_at: string
+  deleted_at?: string
+  restored_at?: string
 }
 
 export interface TaskInput {
   title: string
   description?: string
   priority: 'low' | 'medium' | 'high'
+  due_date?: string
+  due_time?: string
 } 

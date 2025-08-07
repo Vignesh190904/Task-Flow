@@ -1,192 +1,268 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { toast } from '@/hooks/use-toast';
-import { Sidebar, TaskFilter } from '@/components/Sidebar';
-import { TaskList } from '@/components/TaskList';
-import { TaskForm } from '@/components/TaskForm';
-import { Task } from '@/lib/supabase';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { LogOut, User } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { toast } from '@/hooks/use-toast';
+import { Loader2, Plus, Trash2, CheckSquare, Square, Calendar } from 'lucide-react';
+import { Sidebar, TaskFilter } from '@/components/Sidebar';
+import TaskCard from '@/components/TaskCard';
+import TaskForm from '@/components/TaskForm';
+import { TaskService, TaskFilters } from '@/lib/tasks';
+import { Task } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
-import { TaskService } from '@/lib/tasks';
 
 const Dashboard = () => {
-  const navigate = useNavigate();
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [currentFilter, setCurrentFilter] = useState<TaskFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingTask, setEditingTask] = useState<Task | undefined>();
-  const [loading, setLoading] = useState(true);
+  const [showTaskForm, setShowTaskForm] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [taskCounts, setTaskCounts] = useState({
+    all: 0,
+    pending: 0,
+    completed: 0,
+    deleted: 0
+  });
+  const [searchLoading, setSearchLoading] = useState(false);
 
-  // Load tasks on component mount and when filter changes
-  useEffect(() => {
-    if (user) {
-      loadTasks();
-    }
-  }, [user, currentFilter]);
-
-  const loadTasks = async () => {
-    if (!user) return;
-    
-    setLoading(true);
+  // Memoize the loadTasks function to prevent unnecessary re-renders
+  const loadTasks = useCallback(async () => {
     try {
-      const tasksData = await TaskService.getTasksByStatus(user.id, currentFilter);
-      setTasks(tasksData);
+      setLoading(true);
+      setSearchLoading(true);
+      const filters: TaskFilters = {};
+      
+      if (currentFilter !== 'all') {
+        filters.status = currentFilter;
+      }
+      
+      if (searchQuery) {
+        filters.search = searchQuery;
+      }
+
+      const fetchedTasks = await TaskService.getTasks(filters);
+      setTasks(fetchedTasks);
     } catch (error) {
       console.error('Error loading tasks:', error);
+      setError('Failed to load tasks');
       toast({
-        title: "Error loading tasks",
-        description: "Failed to load your tasks. Please try again.",
+        title: "Error",
+        description: "Failed to load tasks. Please try again.",
         variant: "destructive",
       });
     } finally {
       setLoading(false);
+      setSearchLoading(false);
     }
-  };
+  }, [currentFilter, searchQuery]);
 
-  const handleLogout = async () => {
-    const result = await signOut();
-    if (result.success) {
-      navigate('/');
+  // Memoize the loadTaskStats function
+  const loadTaskStats = useCallback(async () => {
+    try {
+      const stats = await TaskService.getTaskStats();
+      setTaskCounts(stats);
+    } catch (error) {
+      console.error('Error loading task stats:', error);
     }
-  };
+  }, []);
 
-  // Calculate task counts for sidebar
-  const taskCounts = {
-    all: tasks.length,
-    pending: tasks.filter(t => t.status === 'pending').length,
-    completed: tasks.filter(t => t.status === 'completed').length,
-    deleted: tasks.filter(t => t.status === 'deleted').length,
-  };
+  // Load tasks and stats when filter or search changes - but prevent infinite loops
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      loadTasks();
+      loadTaskStats();
+    }, 100); // Small delay to prevent rapid successive calls
 
-  // Task operations
-  const handleAddTask = () => {
-    setEditingTask(undefined);
-    setIsFormOpen(true);
-  };
+    return () => clearTimeout(timer);
+  }, [currentFilter, searchQuery]); // Only depend on the actual values, not the functions
 
-  const handleEditTask = (task: Task) => {
+  // Memoize the filter change handler
+  const handleFilterChange = useCallback((filter: TaskFilter) => {
+    setCurrentFilter(filter);
+  }, []);
+
+  // Memoize the search change handler to prevent focus loss
+  const handleSearchChange = useCallback((query: string) => {
+    setSearchQuery(query);
+  }, []);
+
+  // Memoize the add task handler
+  const handleAddTask = useCallback(() => {
+    setEditingTask(null);
+    setShowTaskForm(true);
+  }, []);
+
+  // Memoize the task created handler
+  const handleTaskCreated = useCallback(() => {
+    loadTasks();
+    loadTaskStats();
+  }, [loadTasks, loadTaskStats]);
+
+  // Memoize the edit task handler
+  const handleEditTask = useCallback((task: Task) => {
     setEditingTask(task);
-    setIsFormOpen(true);
-  };
+    setShowTaskForm(true);
+  }, []);
 
-  const handleSubmitTask = async (taskData: { title: string; description?: string; priority: 'low' | 'medium' | 'high' }) => {
-    if (!user) return;
+  // Memoize the task updated handler
+  const handleTaskUpdated = useCallback(() => {
+    loadTasks();
+    loadTaskStats();
+  }, [loadTasks, loadTaskStats]);
 
-    if (editingTask) {
-      // Update existing task
-      const result = await TaskService.updateTask(editingTask.id, taskData);
-      if (result.success) {
-        await loadTasks(); // Reload tasks
-      }
-    } else {
-      // Create new task
-      const result = await TaskService.createTask(user.id, taskData);
-      if (result.success) {
-        await loadTasks(); // Reload tasks
-      }
-    }
-    setIsFormOpen(false);
-    setEditingTask(undefined);
-  };
-
-  const handleCompleteTask = async (id: string) => {
-    const task = tasks.find(t => t.id === id);
-    if (!task) return;
-
-    const result = task.status === 'completed'
-      ? await TaskService.uncompleteTask(id)
-      : await TaskService.completeTask(id);
-
-    if (result.success) {
-      await loadTasks(); // Reload tasks
+  const getFilterTitle = () => {
+    switch (currentFilter) {
+      case 'all':
+        return 'All Tasks';
+      case 'pending':
+        return 'Pending Tasks';
+      case 'completed':
+        return 'Completed Tasks';
+      case 'deleted':
+        return 'Deleted Tasks';
+      default:
+        return 'Tasks';
     }
   };
 
-  const handleDeleteTask = async (id: string) => {
-    const result = await TaskService.deleteTask(id);
-    if (result.success) {
-      await loadTasks(); // Reload tasks
+  const getEmptyStateMessage = () => {
+    if (searchQuery) {
+      return 'No tasks match your search.';
+    }
+    
+    switch (currentFilter) {
+      case 'all':
+        return 'No tasks yet. Create your first task to get started!';
+      case 'pending':
+        return 'No pending tasks. Great job staying on top of things!';
+      case 'completed':
+        return 'No completed tasks yet. Start completing tasks to see them here!';
+      case 'deleted':
+        return 'No deleted tasks. Deleted tasks will appear here.';
+      default:
+        return 'No tasks found.';
     }
   };
 
-  const handleRestoreTask = async (id: string) => {
-    const result = await TaskService.restoreTask(id);
-    if (result.success) {
-      await loadTasks(); // Reload tasks
+  const getEmptyStateIcon = () => {
+    switch (currentFilter) {
+      case 'pending':
+        return <Square className="w-12 h-12 text-muted-foreground" />;
+      case 'completed':
+        return <CheckSquare className="w-12 h-12 text-muted-foreground" />;
+      case 'deleted':
+        return <Trash2 className="w-12 h-12 text-muted-foreground" />;
+      default:
+        return <Calendar className="w-12 h-12 text-muted-foreground" />;
     }
   };
 
   if (!user) {
-    return null; // Loading state
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardContent className="p-6">
+            <p className="text-center text-muted-foreground">Please sign in to access your dashboard.</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-background flex">
-      {/* Header with user info and logout */}
-      <div className="fixed top-0 left-0 right-0 z-50 bg-card/80 backdrop-blur-sm border-b border-border shadow-soft">
-        <div className="flex items-center justify-between px-4 py-3">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-primary rounded-lg flex items-center justify-center shadow-medium">
-              <span className="text-white font-bold text-sm">TF</span>
-            </div>
-            <span className="text-xl font-bold bg-gradient-primary bg-clip-text text-transparent">TaskFlow</span>
-          </div>
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-3 text-sm text-muted-foreground">
-              <img 
-                src={user.avatar_url} 
-                alt="Avatar" 
-                className="w-8 h-8 rounded-full border-2 border-border"
-              />
-              <span className="font-medium text-foreground">Welcome, {user.full_name}</span>
+    <div className="flex h-screen bg-background">
+      {/* Sidebar */}
+      <Sidebar
+        currentFilter={currentFilter}
+        onFilterChange={handleFilterChange}
+        searchQuery={searchQuery}
+        onSearchChange={handleSearchChange}
+        onAddTask={handleAddTask}
+        taskCounts={taskCounts}
+        isSearchLoading={searchLoading}
+      />
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Header */}
+        <div className="p-6 border-b border-border bg-card">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">{getFilterTitle()}</h1>
+              <p className="text-muted-foreground">
+                {tasks.length} {tasks.length === 1 ? 'task' : 'tasks'} found
+                {searchQuery && ` for "${searchQuery}"`}
+              </p>
             </div>
             <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleLogout}
-              className="text-muted-foreground hover:text-primary hover:bg-primary-soft transition-all duration-200"
+              onClick={handleAddTask}
+              className="bg-gradient-primary hover:opacity-90 text-white shadow-medium rounded-lg font-medium transition-all duration-200"
             >
-              <LogOut className="h-4 w-4 mr-2" />
-              Logout
+              <Plus className="h-4 w-4 mr-2" />
+              Add Task
             </Button>
           </div>
         </div>
+
+        {/* Content */}
+        <div className="flex-1 overflow-auto p-6">
+          {error && (
+            <Alert variant="destructive" className="mb-6">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="text-center">
+                <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-primary" />
+                <p className="text-muted-foreground">Loading tasks...</p>
+              </div>
+            </div>
+          ) : tasks.length === 0 ? (
+            <div className="text-center py-12">
+              {getEmptyStateIcon()}
+              <h3 className="text-lg font-medium text-foreground mt-4 mb-2">No tasks found</h3>
+              <p className="text-muted-foreground mb-6">{getEmptyStateMessage()}</p>
+              {currentFilter !== 'deleted' && (
+                <Button
+                  onClick={handleAddTask}
+                  className="bg-gradient-primary hover:opacity-90 text-white shadow-medium rounded-lg font-medium transition-all duration-200"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Your First Task
+                </Button>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {tasks.map((task) => (
+                <TaskCard
+                  key={task.id}
+                  task={task}
+                  onTaskUpdated={handleTaskUpdated}
+                  onEditTask={handleEditTask}
+                  showActions={currentFilter !== 'deleted'}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Main content with top margin for header */}
-      <div className="flex w-full pt-20">
-        <Sidebar
-          currentFilter={currentFilter}
-          onFilterChange={setCurrentFilter}
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          onAddTask={handleAddTask}
-          taskCounts={taskCounts}
-        />
-        
-        <TaskList
-          tasks={tasks}
-          filter={currentFilter}
-          searchQuery={searchQuery}
-          onComplete={handleCompleteTask}
-          onDelete={handleDeleteTask}
-          onRestore={handleRestoreTask}
-          onEdit={handleEditTask}
-        />
-
-        <TaskForm
-          task={editingTask}
-          isOpen={isFormOpen}
-          onSubmit={handleSubmitTask}
-          onCancel={() => {
-            setIsFormOpen(false);
-            setEditingTask(undefined);
-          }}
-        />
-      </div>
+      {/* Task Form Modal */}
+      <TaskForm
+        isOpen={showTaskForm}
+        onClose={() => {
+          setShowTaskForm(false);
+          setEditingTask(null);
+        }}
+        onTaskCreated={handleTaskCreated}
+        editingTask={editingTask}
+      />
     </div>
   );
 };

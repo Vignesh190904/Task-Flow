@@ -10,6 +10,7 @@ import Register from "./pages/Register";
 import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
 import ProfileSettings from "./pages/ProfileSettings";
+import DeletedTasks from "./pages/DeletedTasks";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -100,6 +101,14 @@ const AppRoutes = () => {
           element={
             <ProtectedRoute>
               <ProfileSettings />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/deleted" 
+          element={
+            <ProtectedRoute>
+              <DeletedTasks />
             </ProtectedRoute>
           } 
         />

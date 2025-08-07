@@ -1,238 +1,195 @@
 import { supabase } from './supabase'
-import { toast } from '@/hooks/use-toast'
 import { Task, TaskInput } from './supabase'
 
+export interface TaskFilters {
+  status?: 'pending' | 'completed' | 'deleted' | 'all'
+  search?: string
+  includeDeleted?: boolean
+}
+
 export class TaskService {
-  static async getTasks(userId: string): Promise<Task[]> {
-    try {
-      const { data, error } = await supabase
-        .from('tasks')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-
-      if (error) throw error
-      return data || []
-    } catch (error) {
-      console.error('Error fetching tasks:', error)
-      throw error
-    }
-  }
-
-  static async getTasksByStatus(userId: string, status: 'all' | 'pending' | 'completed' | 'deleted'): Promise<Task[]> {
+  // Get tasks with filters
+  static async getTasks(filters: TaskFilters = {}): Promise<Task[]> {
     try {
       let query = supabase
         .from('tasks')
         .select('*')
-        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
 
-      if (status !== 'all') {
-        query = query.eq('status', status)
+      // Apply status filter
+      if (filters.status && filters.status !== 'all') {
+        query = query.eq('status', filters.status)
       }
 
-      const { data, error } = await query.order('created_at', { ascending: false })
+      // Apply search filter - search in both title and description
+      if (filters.search && filters.search.trim()) {
+        const searchTerm = filters.search.trim()
+        // Use OR condition to search in both title and description
+        query = query.or(`title.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`)
+      }
 
-      if (error) throw error
+      // Handle deleted tasks - show only deleted tasks when status is 'deleted'
+      if (filters.status === 'deleted') {
+        query = query.not('deleted_at', 'is', null)
+      } else {
+        // For non-deleted tasks, exclude deleted ones
+        query = query.is('deleted_at', null)
+      }
+
+      const { data, error } = await query
+
+      if (error) {
+        console.error('Error fetching tasks:', error)
+        throw new Error('Failed to fetch tasks')
+      }
+
       return data || []
     } catch (error) {
-      console.error('Error fetching tasks by status:', error)
-      throw error
+      console.error('TaskService.getTasks error:', error)
+      // Return empty array instead of throwing to prevent UI freezing
+      return []
     }
   }
 
-  static async createTask(userId: string, taskData: TaskInput): Promise<{ success: boolean; task?: Task; error?: string }> {
-    try {
-      const { data, error } = await supabase
-        .from('tasks')
-        .insert({
-          user_id: userId,
-          title: taskData.title,
-          description: taskData.description,
-          priority: taskData.priority,
-          status: 'pending'
-        })
-        .select()
-        .single()
+  // Create a new task
+  static async createTask(taskData: TaskInput): Promise<Task> {
+    const { data: { user } } = await supabase.auth.getUser()
+    
+    if (!user) {
+      throw new Error('User not authenticated')
+    }
 
-      if (error) throw error
-
-      toast({
-        title: "Task created",
-        description: "Your task has been created successfully.",
+    const { data, error } = await supabase
+      .from('tasks')
+      .insert({
+        user_id: user.id,
+        title: taskData.title,
+        description: taskData.description,
+        priority: taskData.priority,
+        due_date: taskData.due_date,
+        due_time: taskData.due_time,
+        status: 'pending'
       })
+      .select()
+      .single()
 
-      return { success: true, task: data }
-    } catch (error) {
+    if (error) {
       console.error('Error creating task:', error)
-      return { success: false, error: 'Failed to create task' }
+      throw new Error('Failed to create task')
     }
+
+    return data
   }
 
-  static async updateTask(taskId: string, updates: Partial<TaskInput>): Promise<{ success: boolean; task?: Task; error?: string }> {
-    try {
-      const { data, error } = await supabase
-        .from('tasks')
-        .update(updates)
-        .eq('id', taskId)
-        .select()
-        .single()
+  // Update a task
+  static async updateTask(taskId: string, updates: Partial<TaskInput>): Promise<Task> {
+    const { data, error } = await supabase
+      .from('tasks')
+      .update(updates)
+      .eq('id', taskId)
+      .select()
+      .single()
 
-      if (error) throw error
-
-      toast({
-        title: "Task updated",
-        description: "Your task has been updated successfully.",
-      })
-
-      return { success: true, task: data }
-    } catch (error) {
+    if (error) {
       console.error('Error updating task:', error)
-      return { success: false, error: 'Failed to update task' }
+      throw new Error('Failed to update task')
     }
+
+    return data
   }
 
-  static async completeTask(taskId: string): Promise<{ success: boolean; error?: string }> {
-    try {
-      const { error } = await supabase
-        .from('tasks')
-        .update({ status: 'completed' })
-        .eq('id', taskId)
+  // Mark task as completed
+  static async completeTask(taskId: string): Promise<void> {
+    const { error } = await supabase
+      .from('tasks')
+      .update({ status: 'completed' })
+      .eq('id', taskId)
 
-      if (error) throw error
-
-      toast({
-        title: "Task completed",
-        description: "Task marked as completed.",
-      })
-
-      return { success: true }
-    } catch (error) {
+    if (error) {
       console.error('Error completing task:', error)
-      return { success: false, error: 'Failed to complete task' }
+      throw new Error('Failed to complete task')
     }
   }
 
-  static async uncompleteTask(taskId: string): Promise<{ success: boolean; error?: string }> {
-    try {
-      const { error } = await supabase
-        .from('tasks')
-        .update({ status: 'pending' })
-        .eq('id', taskId)
+  // Mark task as pending
+  static async markAsPending(taskId: string): Promise<void> {
+    const { error } = await supabase
+      .rpc('mark_task_as_pending', { task_id: taskId })
 
-      if (error) throw error
-
-      toast({
-        title: "Task uncompleted",
-        description: "Task moved back to pending.",
-      })
-
-      return { success: true }
-    } catch (error) {
-      console.error('Error uncompleting task:', error)
-      return { success: false, error: 'Failed to uncomplete task' }
+    if (error) {
+      console.error('Error marking task as pending:', error)
+      throw new Error('Failed to mark task as pending')
     }
   }
 
-  static async deleteTask(taskId: string): Promise<{ success: boolean; error?: string }> {
-    try {
-      const { error } = await supabase
-        .from('tasks')
-        .update({ status: 'deleted' })
-        .eq('id', taskId)
+  // Soft delete a task
+  static async deleteTask(taskId: string): Promise<void> {
+    const { error } = await supabase
+      .rpc('soft_delete_task', { task_id: taskId })
 
-      if (error) throw error
-
-      toast({
-        title: "Task deleted",
-        description: "Task moved to deleted section.",
-      })
-
-      return { success: true }
-    } catch (error) {
+    if (error) {
       console.error('Error deleting task:', error)
-      return { success: false, error: 'Failed to delete task' }
+      throw new Error('Failed to delete task')
     }
   }
 
-  static async restoreTask(taskId: string): Promise<{ success: boolean; error?: string }> {
-    try {
-      const { error } = await supabase
-        .from('tasks')
-        .update({ status: 'pending' })
-        .eq('id', taskId)
+  // Restore a deleted task
+  static async restoreTask(taskId: string): Promise<void> {
+    const { error } = await supabase
+      .rpc('restore_task', { task_id: taskId })
 
-      if (error) throw error
-
-      toast({
-        title: "Task restored",
-        description: "Task has been restored to pending.",
-      })
-
-      return { success: true }
-    } catch (error) {
+    if (error) {
       console.error('Error restoring task:', error)
-      return { success: false, error: 'Failed to restore task' }
+      throw new Error('Failed to restore task')
     }
   }
 
-  static async permanentlyDeleteTask(taskId: string): Promise<{ success: boolean; error?: string }> {
-    try {
-      const { error } = await supabase
-        .from('tasks')
-        .delete()
-        .eq('id', taskId)
+  // Permanently delete a task
+  static async permanentlyDeleteTask(taskId: string): Promise<void> {
+    const { error } = await supabase
+      .rpc('permanently_delete_task', { task_id: taskId })
 
-      if (error) throw error
-
-      toast({
-        title: "Task permanently deleted",
-        description: "Task has been permanently removed.",
-      })
-
-      return { success: true }
-    } catch (error) {
+    if (error) {
       console.error('Error permanently deleting task:', error)
-      return { success: false, error: 'Failed to permanently delete task' }
+      throw new Error('Failed to permanently delete task')
     }
   }
 
-  static async getTaskStats(userId: string): Promise<{ total: number; pending: number; completed: number; deleted: number }> {
+  // Get task statistics
+  static async getTaskStats(): Promise<{
+    total: number
+    pending: number
+    completed: number
+    deleted: number
+  }> {
     try {
       const { data, error } = await supabase
         .from('tasks')
-        .select('status')
-        .eq('user_id', userId)
+        .select('status, deleted_at')
 
-      if (error) throw error
+      if (error) {
+        console.error('Error fetching task stats:', error)
+        throw new Error('Failed to fetch task statistics')
+      }
 
+      const tasks = data || []
       const stats = {
-        total: data?.length || 0,
-        pending: data?.filter(t => t.status === 'pending').length || 0,
-        completed: data?.filter(t => t.status === 'completed').length || 0,
-        deleted: data?.filter(t => t.status === 'deleted').length || 0,
+        total: tasks.filter(task => !task.deleted_at).length,
+        pending: tasks.filter(task => task.status === 'pending' && !task.deleted_at).length,
+        completed: tasks.filter(task => task.status === 'completed' && !task.deleted_at).length,
+        deleted: tasks.filter(task => task.deleted_at).length
       }
 
       return stats
     } catch (error) {
-      console.error('Error fetching task stats:', error)
-      return { total: 0, pending: 0, completed: 0, deleted: 0 }
-    }
-  }
-
-  static async searchTasks(userId: string, query: string): Promise<Task[]> {
-    try {
-      const { data, error } = await supabase
-        .from('tasks')
-        .select('*')
-        .eq('user_id', userId)
-        .or(`title.ilike.%${query}%,description.ilike.%${query}%`)
-        .order('created_at', { ascending: false })
-
-      if (error) throw error
-      return data || []
-    } catch (error) {
-      console.error('Error searching tasks:', error)
-      return []
+      console.error('TaskService.getTaskStats error:', error)
+      // Return default stats instead of throwing to prevent UI freezing
+      return {
+        total: 0,
+        pending: 0,
+        completed: 0,
+        deleted: 0
+      }
     }
   }
 } 

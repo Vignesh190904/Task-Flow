@@ -8,15 +8,14 @@ import {
   Plus,
   Menu,
   X,
-  Home,
-  Settings,
-  User
+  Home
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { SearchBar } from './SearchBar';
 
 export type TaskFilter = 'all' | 'pending' | 'completed' | 'deleted';
 
@@ -32,6 +31,7 @@ interface SidebarProps {
     completed: number;
     deleted: number;
   };
+  isSearchLoading?: boolean;
 }
 
 const navigationItems = [
@@ -47,7 +47,8 @@ export function Sidebar({
   searchQuery, 
   onSearchChange, 
   onAddTask,
-  taskCounts 
+  taskCounts,
+  isSearchLoading
 }: SidebarProps) {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const { user, signOut } = useAuth();
@@ -81,15 +82,12 @@ export function Sidebar({
 
       {/* Search */}
       <div className="p-4 border-b border-border">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search tasks..."
-            value={searchQuery}
-            onChange={(e) => onSearchChange(e.target.value)}
-            className="pl-10 bg-background border-border focus:border-ring rounded-lg transition-all duration-200"
-          />
-        </div>
+        <SearchBar
+          onSearch={onSearchChange}
+          placeholder="Search tasks..."
+          className="w-full"
+          isLoading={isSearchLoading}
+        />
       </div>
 
       {/* Add Task Button */}
@@ -143,7 +141,7 @@ export function Sidebar({
         {user && (
           <div className="flex items-center gap-3 mb-3">
             <img
-              src={user.avatar_url}
+              src={user.custom_avatar_url || user.avatar_url}
               alt={user.full_name}
               className="w-8 h-8 rounded-full border border-border"
             />
@@ -165,7 +163,6 @@ export function Sidebar({
             onClick={() => navigate('/profile')}
             className="flex-1 text-xs hover:bg-muted transition-all duration-200"
           >
-            <Settings className="h-3 w-3 mr-1" />
             Settings
           </Button>
           <Button
