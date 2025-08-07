@@ -5,6 +5,8 @@ import path from "path";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
+  // Base path set for GitHub Pages deployment. If deploying elsewhere, change or remove the `base` option.
+  base: "/Task-Flow/",
   server: {
     host: "::",
     port: 8080,

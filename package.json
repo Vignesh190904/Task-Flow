@@ -13,9 +13,16 @@
     "setup": "node setup.js"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "concurrently": "^8.2.2",
+    "vite": "^7.0.6"
   },
-  "keywords": ["task-management", "react", "express", "mongodb", "authentication"],
+  "keywords": [
+    "task-management",
+    "react",
+    "express",
+    "mongodb",
+    "authentication"
+  ],
   "author": "TaskFlow",
   "license": "MIT"
-} 
+}

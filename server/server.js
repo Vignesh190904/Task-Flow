@@ -16,7 +16,10 @@ const PORT = process.env.PORT || 5000;
 app.use(helmet());
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? ['https://yourdomain.com'] 
+    ? [
+        'https://vignesh190904.github.io',
+        'https://vignesh190904.github.io/Task-Flow/'
+      ] 
     : ['http://localhost:3000', 'http://localhost:5173'],
   credentials: true
 }));

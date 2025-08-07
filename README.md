@@ -245,3 +245,21 @@ This project is licensed under the MIT License.
 ---
 
 **TaskFlow** - Plan. Prioritize. Progress. ✨
+
+## Deployment Instructions
+
+### Backend (Render)
+- **Root Directory:** `server/`
+- **Build Command:** (leave blank or use `npm install`)
+- **Start Command:** `npm start`
+- **Environment Variables:** Set all required variables (e.g., `MONGODB_URI`, `NODE_ENV`, etc.) in the Render dashboard.
+- **CORS:** Already configured for GitHub Pages domain.
+
+### Frontend (GitHub Pages)
+- **Build Command:** `npm run build`
+- **Build Directory:** `client/dist`
+- **Base Path:** Set to `/Task-Flow/` in `vite.config.ts`.
+- **Homepage:** Set to `https://vignesh190904.github.io/Task-Flow/` in `package.json`.
+- **Deploy:** Push the contents of `client/dist` to the `gh-pages` branch or use GitHub Actions for automatic deployment.
+
+---
